@@ -1,0 +1,136 @@
+velvetfabric:
+  controllers:
+    - apic1.velvet.aci.example.com
+    - apic2.velvet.aci.example.com
+    - apic3.velvet.aci.example.com
+  auth:
+    username: admin
+    password: F4k3p4ssw0rd!
+  queries:
+    dom_stats:
+      class_name: ethpmDOMStats
+      scope: children
+      metrics:
+        - key: aciDomCurrentValue
+          property_name: value
+          type: gauge
+          help_text: The current value of this Digital Optical Monitoring gauge.
+        - key: aciDomHighAlarmValue
+          property_name: hiAlarm
+          type: gauge
+          help_text: The high alarm value of this Digital Optical Monitoring
+            gauge; if the current value is higher than this value, it signifies
+            a critical state.
+        - key: aciDomHighWarningValue
+          property_name: hiWarn
+          type: gauge
+          help_text: The high warning value of this Digital Optical Monitoring
+            gauge; if the current value is higher than this value (but lower
+            than the high alarm value), it signifies a warning state.
+        - key: aciDomLowAlarmValue
+          property_name: loAlarm
+          type: gauge
+          help_text: The low alarm value of this Digital Optical Monitoring
+            gauge; if the current value is lower than this value, it signifies a
+            critical state.
+        - key: aciDomLowWarningValue
+          property_name: loWarn
+          type: gauge
+          help_text: The low warning value of this Digital Optical Monitoring
+            gauge; if the current value is lower than this value (but higher
+            than the low alarm value), it signifies a warning state.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"
+    interface_rx_stats:
+      class_name: eqptIngrBytes5min
+      metrics:
+        - key: aciInterfaceRxUnicastBytesCounter
+          property_name: unicastCum
+          type: counter
+          help_text: The number of unicast bytes received on the interface since
+            it was integrated into the fabric.
+        - key: aciInterfaceRxMulticastBytesCounter
+          property_name: multicastCum
+          type: counter
+          help_text: The number of multicast bytes received on the interface
+            since it was integrated into the fabric.
+        - key: aciInterfaceRxBroadcastBytesCounter
+          property_name: floodCum
+          type: counter
+          help_text: The number of broadcast bytes received on the interface
+            since it was integrated into the fabric.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+    interface_tx_stats:
+      class_name: eqptEgrBytes5min
+      metrics:
+        - key: aciInterfaceTxUnicastBytesCounter
+          property_name: unicastCum
+          type: counter
+          help_text: The number of unicast bytes transmitted on the interface
+            since it was integrated into the fabric.
+        - key: aciInterfaceTxMulticastBytesCounter
+          property_name: multicastCum
+          type: counter
+          help_text: The number of multicast bytes transmitted on the interface
+            since it was integrated into the fabric.
+        - key: aciInterfaceTxBroadcastBytesCounter
+          property_name: floodCum
+          type: counter
+          help_text: The number of broadcast bytes transmitted on the interface
+            since it was integrated into the fabric.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+    fru_power_stats:
+      class_name: eqptFruPower5min
+      metrics:
+        - key: aciFruCurrentPowerWatts
+          property_name: drawnLast
+          type: gauge
+          help_text: The current amount of power, in watts, drawn by the
+            Field-Replaceable Unit.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
+    fan_rpm_stats:
+      class_name: eqptFanStats5min
+      metrics:
+        - key: aciFanCurrentRpm
+          property_name: speedLast
+          type: gauge
+          help_text: The current speed, in rotations per minute, of the fan.
+        - key: aciFanCurrentPwm
+          property_name: pwmLast
+          type: gauge
+          help_text: The current Pulse-Width Modulation value of the fan.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
+    psu_power_stats:
+      class_name: eqptPsPower5min
+      metrics:
+        - key: aciPsuCurrentlyDrawnWatts
+          property_name: drawnLast
+          type: gauge
+          help_text: The current power, in watts, drawn from the power supply.
+        - key: aciPsuCurrentlySuppliedWatts
+          property_name: suppliedLast
+          type: gauge
+          help_text: The current power, in watts, supplied by the power supply.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
+    temp_stats:
+      class_name: eqptTemp5min
+      metrics:
+        - key: aciCurrentTemperatureCelsius
+          property_name: currentLast
+          type: gauge
+          help_text: The current temperature, in degrees Celsius, measured by
+            the sensor.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)(?:-(?P<slot>[^/]+))?/(?P<device>[^/]+)/sensor-(?P<sensorNumber>[^/]+)/"
