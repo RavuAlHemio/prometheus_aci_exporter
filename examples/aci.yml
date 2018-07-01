@@ -4,7 +4,7 @@ velvetfabric:
     - apic2.velvet.aci.example.com
     - apic3.velvet.aci.example.com
   auth:
-    username: admin
+    username: moniteur
     password: F4k3p4ssw0rd!
   queries:
     dom_stats:
@@ -134,3 +134,51 @@ velvetfabric:
       labels:
         - property_name: dn
           regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)(?:-(?P<slot>[^/]+))?/(?P<device>[^/]+)/sensor-(?P<sensorNumber>[^/]+)/"
+    switch_cpu_stats:
+      class_name: procSysCPU5min
+      metrics:
+        - key: aciSwitchCpuKernelUsagePercent
+          property_name: kernelLast
+          type: gauge
+          help_text: The current Central Processing Unit usage, in percent, of
+            the switch by kernel processes.
+        - key: aciSwitchCpuUserUsagePercent
+          property_name: userLast
+          type: gauge
+          help_text: The current Central Processing Unit usage, in percent, of
+            the switch by user processes.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/"
+    fabric_health_score:
+      class_name: fabricOverallHealth5min
+      metrics:
+        - key: aciFabricHealthScore
+          property_name: healthLast
+          type: gauge
+          help_text: The current overall fabric health score.
+      labels:
+        - property_name: dn
+          regex: "^topology/[^/]+$"
+          regex_must_match: true
+    pod_health_score:
+      class_name: fabricOverallHealth5min
+      metrics:
+        - key: aciPodHealthScore
+          property_name: healthLast
+          type: gauge
+          help_text: The current health score of a single pod in the fabric.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/[^/]+$"
+          regex_must_match: true
+    node_health_score:
+      class_name: fabricNodeHealth5min
+      metrics:
+        - key: aciNodeHealthScore
+          property_name: healthLast
+          type: gauge
+          help_text: The current health score of a single node in the fabric.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/"
