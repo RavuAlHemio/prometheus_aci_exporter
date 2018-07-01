@@ -95,6 +95,7 @@ class AciCollector(object):
                 all_values_labels = []
                 metric_definitions = {}
                 for instance in instances['imdata']:
+                    drop_instance = False
                     class_name = list(instance.keys())[0]
                     attributes = instance[class_name]['attributes']
 
@@ -106,7 +107,14 @@ class AciCollector(object):
                     if not query.get('omit_class_name_label', False):
                         labels['className'] = class_name
                     for label_definition in query['labels']:
+                        updated_labels = self.process_value(attributes, label_definition)
+                        if updated_labels is None:
+                            drop_instance = True
+                            break
                         labels.update(self.process_value(attributes, label_definition))
+
+                    if drop_instance:
+                        continue
 
                     values = {}
 
@@ -121,7 +129,14 @@ class AciCollector(object):
                         metric_definitions[metric_name] = metric_object
 
                         # store the value
+                        value = self.process_value(attributes, value_definition)
+                        if value is None:
+                            drop_instance = True
+                            break
                         values.update(self.process_value(attributes, value_definition))
+
+                    if drop_instance:
+                        continue
 
                     all_values_labels.append((values, labels))
 
@@ -147,6 +162,7 @@ class AciCollector(object):
 
         # regex extraction
         regex_str = definition.get('regex', None)
+        regex_must_match = definition.get('regex_must_match', False)
         if regex_str is not None:
             try:
                 regex = self.regex_cache[regex_str]
@@ -158,6 +174,9 @@ class AciCollector(object):
             if match is not None:
                 match_dict = match.groupdict()
                 property_value = {k: v if v is not None else "" for (k, v) in match_dict.items()}
+            elif regex_must_match:
+                # it didn't match, though
+                return None
 
         # key renaming
         key_renaming = definition.get('key_renaming', None)
