@@ -61,7 +61,7 @@ class AciSession(object):
             query_options['query-target-filter'] = filter_string
 
         response = requests.get(
-            f"https://{self.controller}/api/node/class/{escaped_class}.json",
+            f"https://{self.controller}/api/class/{escaped_class}.json",
             params=query_options,
             cookies={APIC_COOKIE_NAME: self.auth_token},
             timeout=self.timeout,
