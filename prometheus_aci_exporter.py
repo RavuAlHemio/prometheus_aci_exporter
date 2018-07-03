@@ -85,7 +85,24 @@ class AciCollector(object):
             self.config = self.pending_config
             self.pending_config = None
 
+        scrape_duration_metric = GaugeMetricFamily(
+            'aci_scrape_duration_seconds',
+            'The duration, in seconds, of the last scrape of the fabric.',
+            labels=['fabric']
+        )
+
         for fabric_name, fabric in self.config.items():
+            time_start = time.perf_counter()
+
+            yield from self.collect_fabric(fabric_name, fabric)
+
+            time_end = time.perf_counter()
+            scrape_duration_metric.add_metric([fabric_name], time_end - time_start)
+
+        yield scrape_duration_metric
+
+    def collect_fabric(self, fabric_name, fabric):
+
             controllers = fabric['controllers']
 
             # FIXME: actually support multiple controllers
