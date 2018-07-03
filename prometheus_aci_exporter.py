@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import re
+import signal
 import time
 import urllib.parse as up
 from prometheus_client import REGISTRY, start_http_server
@@ -75,10 +76,15 @@ class AciSession(object):
 class AciCollector(object):
     def __init__(self, config):
         self.config = config
+        self.pending_config = None
         self.timeout = DEFAULT_TIMEOUT
         self.regex_cache = {}
 
     def collect(self):
+        if self.pending_config is not None:
+            self.config = self.pending_config
+            self.pending_config = None
+
         for fabric_name, fabric in self.config.items():
             controllers = fabric['controllers']
 
@@ -211,6 +217,15 @@ def load_config(config_file_name):
         return yaml.safe_load(config_file)
 
 
+def get_sighup_handler(aci_collector, config_file_name):
+
+    def handle_sighup(signal_number, stack_frame):
+        config = load_config(config_file_name)
+        aci_collector.pending_config = config
+
+    return handle_sighup
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config.file", dest="config_file", default="aci.yml")
@@ -222,6 +237,10 @@ def main():
 
     aci_collector = AciCollector(config)
     REGISTRY.register(aci_collector)
+
+    if 'SIGHUP' in dir(signal):
+        sighup_handler = get_sighup_handler(aci_collector, args.config_file)
+        signal.signal(signal.SIGHUP, sighup_handler)
 
     start_http_server(args.web_listen_port, args.web_listen_address)
 
