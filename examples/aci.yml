@@ -182,3 +182,14 @@ velvetfabric:
       labels:
         - property_name: dn
           regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/"
+    tenant_health_score:
+      class_name: fvOverallHealth15min
+      metrics:
+        - key: aci_tenant_health_score
+          property_name: healthLast
+          type: gauge
+          help_text: The current health score of a single tenant in the fabric.
+      labels:
+        - property_name: dn
+          regex: "^uni/tn-(?P<tenant>[^/]+)/"
+
