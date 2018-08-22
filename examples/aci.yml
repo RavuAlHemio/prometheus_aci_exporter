@@ -42,6 +42,35 @@ velvetfabric:
       labels:
         - property_name: dn
           regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"
+    interface_info:
+      class_name: ethpmPhysIf
+      metrics:
+        - key: aci_interface_oper_speed_bps
+          property_name: operSpeed
+          type: gauge
+          help_text: The current operational speed of the interface, in bits per
+            second.
+          cases:
+            'unknown':            0
+            '100M':       100000000
+            '1G':        1000000000
+            '10G':      10000000000
+            '25G':      25000000000
+            '40G':      40000000000
+            '100G':    100000000000
+        - key: aci_interface_oper_state
+          property_name: operSt
+          type: gauge
+          help_text: The current operational state of the interface.
+            (0=unknown, 1=down, 2=up, 3=link-up)
+          cases:
+            'unknown': 0
+            'down': 1
+            'up': 2
+            'link-up': 3
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"
     interface_rx_stats:
       class_name: eqptIngrBytes5min
       metrics:
