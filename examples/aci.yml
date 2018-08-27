@@ -113,6 +113,60 @@ velvetfabric:
       labels:
         - property_name: dn
           regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+    interface_rx_err_stats:
+      class_name: eqptIngrDropPkts5min
+      metrics:
+        - key: aci_interface_rx_buffer_dropped_pkts
+          property_name: bufferCum
+          type: counter
+          help_text: The number of packets dropped by the interface due to a
+            buffer overrun while receiving since it was integrated into the
+            fabric.
+        - key: aci_interface_rx_error_dropped_pkts
+          property_name: errorCum
+          type: counter
+          help_text: The number of packets dropped by the interface due to a
+            packet error while receiving since it was integrated into the
+            fabric.
+        - key: aci_interface_rx_forwarding_dropped_pkts
+          property_name: forwardingCum
+          type: counter
+          help_text: The number of packets dropped by the interface due to a
+            forwarding issue while receiving since it was integrated into the
+            fabric.
+        - key: aci_interface_rx_loadbal_dropped_pkts
+          property_name: lbCum
+          type: counter
+          help_text: The number of packets dropped by the interface due to a
+            load balancing issue while receiving since it was integrated into
+            the fabric.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+    interface_tx_err_stats:
+      class_name: eqptEgrDropPkts5min
+      metrics:
+        - key: aci_interface_tx_queue_dropped_pkts
+          property_name: afdWredCum
+          type: counter
+          help_text: The number of packets dropped by the interface during queue
+            management while transmitting since it was integrated into the
+            fabric.
+        - key: aci_interface_tx_buffer_dropped_pkts
+          property_name: bufferCum
+          type: counter
+          help_text: The number of packets dropped by the interface due to a
+            buffer overrun while transmitting since it was integrated into the
+            fabric.
+        - key: aci_interface_tx_error_dropped_pkts
+          property_name: errorCum
+          type: counter
+          help_text: The number of packets dropped by the interface due to a
+            packet error while transmitting since it was integrated into the
+            fabric.
+      labels:
+        - property_name: dn
+          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
     fru_power_stats:
       class_name: eqptFruPower5min
       metrics:
