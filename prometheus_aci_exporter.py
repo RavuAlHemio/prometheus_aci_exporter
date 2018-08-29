@@ -94,19 +94,35 @@ class AciCollector(object):
         for fabric_name, fabric in self.config.items():
             time_start = time.perf_counter()
 
-            yield from self.collect_fabric(fabric_name, fabric)
+            # try each controller in turn
+            working_index = None
+            for i, controller in enumerate(fabric['controllers']):
+                try:
+                    yield from self.collect_fabric(fabric_name, fabric, controller)
+
+                    working_index = i
+                    break
+
+                except requests.exceptions.Timeout:
+                    # try the next controller
+                    pass
 
             time_end = time.perf_counter()
+
+            # reorder controllers?
+            if working_index is not None and working_index > 0:
+                # yes
+                cur_ctrls = fabric['controllers']
+                fabric['controllers'] = cur_ctrls[working_index:] + cur_ctrls[:working_index]
+
+                # note that the order is reset when the configuration is reloaded (e.g. SIGHUP)
+
             scrape_duration_metric.add_metric([fabric_name], time_end - time_start)
 
         yield scrape_duration_metric
 
-    def collect_fabric(self, fabric_name, fabric):
-
-        controllers = fabric['controllers']
-
-        # FIXME: actually support multiple controllers
-        session = AciSession(controllers[0])
+    def collect_fabric(self, fabric_name, fabric, controller):
+        session = AciSession(controller)
         session.auth(fabric['auth'])
 
         for query_name, query in fabric['queries'].items():
