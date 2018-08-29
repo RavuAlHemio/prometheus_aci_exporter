@@ -103,76 +103,76 @@ class AciCollector(object):
 
     def collect_fabric(self, fabric_name, fabric):
 
-            controllers = fabric['controllers']
+        controllers = fabric['controllers']
 
-            # FIXME: actually support multiple controllers
-            session = AciSession(controllers[0])
-            session.auth(fabric['auth'])
+        # FIXME: actually support multiple controllers
+        session = AciSession(controllers[0])
+        session.auth(fabric['auth'])
 
-            for query_name, query in fabric['queries'].items():
-                class_name = query['class_name']
-                scope = query.get('scope', 'self')
-                filter_string = query.get('filter', None)
+        for query_name, query in fabric['queries'].items():
+            class_name = query['class_name']
+            scope = query.get('scope', 'self')
+            filter_string = query.get('filter', None)
 
-                instances = session.obtain_instances(class_name, filter_string, scope)
-                all_values_labels = []
-                metric_definitions = {}
-                for instance in instances['imdata']:
-                    drop_instance = False
-                    class_name = list(instance.keys())[0]
-                    attributes = instance[class_name]['attributes']
+            instances = session.obtain_instances(class_name, filter_string, scope)
+            all_values_labels = []
+            metric_definitions = {}
+            for instance in instances['imdata']:
+                drop_instance = False
+                class_name = list(instance.keys())[0]
+                attributes = instance[class_name]['attributes']
 
-                    labels = {}
-                    if not query.get('omit_query_name_label', False):
-                        labels['queryName'] = query_name
-                    if not query.get('omit_fabric_label', False):
-                        labels['fabric'] = fabric_name
-                    if not query.get('omit_class_name_label', False):
-                        labels['className'] = class_name
-                    for label_definition in query['labels']:
-                        updated_labels = self.process_value(attributes, label_definition)
-                        if updated_labels is None:
-                            drop_instance = True
-                            break
-                        labels.update(self.process_value(attributes, label_definition))
+                labels = {}
+                if not query.get('omit_query_name_label', False):
+                    labels['queryName'] = query_name
+                if not query.get('omit_fabric_label', False):
+                    labels['fabric'] = fabric_name
+                if not query.get('omit_class_name_label', False):
+                    labels['className'] = class_name
+                for label_definition in query['labels']:
+                    updated_labels = self.process_value(attributes, label_definition)
+                    if updated_labels is None:
+                        drop_instance = True
+                        break
+                    labels.update(self.process_value(attributes, label_definition))
 
-                    if drop_instance:
-                        continue
-
-                    values = {}
-
-                    for value_definition in query['metrics']:
-                        # extract the definition
-                        metric_name = value_definition['key']
-                        metric_type = value_definition['type']
-                        help_text = value_definition.get('help_text', '')
-                        family = METRIC_TYPES[metric_type]
-
-                        metric_object = family(metric_name, help_text, labels=labels.keys())
-                        metric_definitions[metric_name] = metric_object
-
-                        # store the value
-                        value = self.process_value(attributes, value_definition)
-                        if value is None:
-                            drop_instance = True
-                            break
-                        values.update(self.process_value(attributes, value_definition))
-
-                    if drop_instance:
-                        continue
-
-                    all_values_labels.append((values, labels))
-
-                if not all_values_labels:
+                if drop_instance:
                     continue
 
-                for values, labels in all_values_labels:
-                    for key, value in values.items():
-                        metric_object = metric_definitions[key]
-                        metric_object.add_metric(labels.values(), float(value))
+                values = {}
 
-                for metric_object in metric_definitions.values():
-                    yield metric_object
+                for value_definition in query['metrics']:
+                    # extract the definition
+                    metric_name = value_definition['key']
+                    metric_type = value_definition['type']
+                    help_text = value_definition.get('help_text', '')
+                    family = METRIC_TYPES[metric_type]
+
+                    metric_object = family(metric_name, help_text, labels=labels.keys())
+                    metric_definitions[metric_name] = metric_object
+
+                    # store the value
+                    value = self.process_value(attributes, value_definition)
+                    if value is None:
+                        drop_instance = True
+                        break
+                    values.update(self.process_value(attributes, value_definition))
+
+                if drop_instance:
+                    continue
+
+                all_values_labels.append((values, labels))
+
+            if not all_values_labels:
+                continue
+
+            for values, labels in all_values_labels:
+                for key, value in values.items():
+                    metric_object = metric_definitions[key]
+                    metric_object.add_metric(labels.values(), float(value))
+
+            for metric_object in metric_definitions.values():
+                yield metric_object
 
 
     def process_value(self, attributes, definition):
