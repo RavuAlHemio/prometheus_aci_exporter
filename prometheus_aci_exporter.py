@@ -252,7 +252,7 @@ def load_config(config_file_name):
 
 def get_sighup_handler(aci_collector, config_file_name):
 
-    def handle_sighup(signal_number, stack_frame):
+    def handle_sighup(_signal_number, _stack_frame):
         config = load_config(config_file_name)
         aci_collector.pending_config = config
 
