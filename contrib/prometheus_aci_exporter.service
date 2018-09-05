@@ -1,0 +1,13 @@
+[Unit]
+Description=Cisco ACI exporter for Prometheus
+
+[Service]
+Type=simple
+Environment=ACI_EXPORTER_PORT=9377 ACI_EXPORTER_CONFIG_FILE=/opt/prometheus_aci_exporter/aci.yml
+EnvironmentFile=-/etc/default/prometheus_aci_exporter
+WorkingDirectory=/opt/prometheus_aci_exporter
+ExecStart=/opt/prometheus_aci_exporter/prometheus_aci_exporter.py --web.listen-port=${ACI_EXPORTER_PORT} --config.file=${ACI_EXPORTER_CONFIG_FILE}
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
