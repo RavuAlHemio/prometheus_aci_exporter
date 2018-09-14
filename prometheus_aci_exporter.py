@@ -129,7 +129,7 @@ class AciCollector(object):
         session.auth(fabric['auth'])
 
         all_queries = chain(
-            fabric['queries'].items(),
+            fabric.get('queries', dict()).items(),
             common_queries.items()
         )
         for query_name, query in all_queries:
