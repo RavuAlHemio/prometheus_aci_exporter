@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from itertools import chain
 import re
 import signal
 import time
@@ -91,14 +92,16 @@ class AciCollector(object):
             labels=['fabric']
         )
 
-        for fabric_name, fabric in self.config.items():
+        common_queries = self.config.get('common_queries', dict())
+
+        for fabric_name, fabric in self.config['fabrics'].items():
             time_start = time.perf_counter()
 
             # try each controller in turn
             working_index = None
             for i, controller in enumerate(fabric['controllers']):
                 try:
-                    yield from self.collect_fabric(fabric_name, fabric, controller)
+                    yield from self.collect_fabric(fabric_name, fabric, controller, common_queries)
 
                     working_index = i
                     break
@@ -121,11 +124,15 @@ class AciCollector(object):
 
         yield scrape_duration_metric
 
-    def collect_fabric(self, fabric_name, fabric, controller):
+    def collect_fabric(self, fabric_name, fabric, controller, common_queries):
         session = AciSession(controller)
         session.auth(fabric['auth'])
 
-        for query_name, query in fabric['queries'].items():
+        all_queries = chain(
+            fabric['queries'].items(),
+            common_queries.items()
+        )
+        for query_name, query in all_queries:
             class_name = query['class_name']
             scope = query.get('scope', 'self')
             filter_string = query.get('filter', None)

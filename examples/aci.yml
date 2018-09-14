@@ -1,278 +1,287 @@
-velvetfabric:
-  controllers:
-    - apic1.velvet.aci.example.com
-    - apic2.velvet.aci.example.com
-    - apic3.velvet.aci.example.com
-  auth:
-    username: moniteur
-    password: F4k3p4ssw0rd!
-  queries:
-    dom_stats:
-      class_name: ethpmDOMStats
-      scope: children
-      metrics:
-        - key: aci_dom_value
-          property_name: value
-          type: gauge
-          help_text: The current value of this Digital Optical Monitoring gauge.
-        - key: aci_dom_high_alarm_value
-          property_name: hiAlarm
-          type: gauge
-          help_text: The high alarm value of this Digital Optical Monitoring
-            gauge; if the current value is higher than this value, it signifies
-            a critical state.
-        - key: aci_dom_high_warning_value
-          property_name: hiWarn
-          type: gauge
-          help_text: The high warning value of this Digital Optical Monitoring
-            gauge; if the current value is higher than this value (but lower
-            than the high alarm value), it signifies a warning state.
-        - key: aci_dom_low_alarm_value
-          property_name: loAlarm
-          type: gauge
-          help_text: The low alarm value of this Digital Optical Monitoring
-            gauge; if the current value is lower than this value, it signifies a
-            critical state.
-        - key: aci_dom_low_warning_value
-          property_name: loWarn
-          type: gauge
-          help_text: The low warning value of this Digital Optical Monitoring
-            gauge; if the current value is lower than this value (but higher
-            than the low alarm value), it signifies a warning state.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"
-    interface_info:
-      class_name: ethpmPhysIf
-      metrics:
-        - key: aci_interface_oper_speed_bps
-          property_name: operSpeed
-          type: gauge
-          help_text: The current operational speed of the interface, in bits per
-            second.
-          cases:
-            'unknown':            0
-            '100M':       100000000
-            '1G':        1000000000
-            '10G':      10000000000
-            '25G':      25000000000
-            '40G':      40000000000
-            '100G':    100000000000
-        - key: aci_interface_oper_state
-          property_name: operSt
-          type: gauge
-          help_text: The current operational state of the interface.
-            (0=unknown, 1=down, 2=up, 3=link-up)
-          cases:
-            'unknown': 0
-            'down': 1
-            'up': 2
-            'link-up': 3
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"
-    interface_rx_stats:
-      class_name: eqptIngrBytes5min
-      metrics:
-        - key: aci_interface_rx_unicast_bytes
-          property_name: unicastCum
-          type: counter
-          help_text: The number of unicast bytes received on the interface since
-            it was integrated into the fabric.
-        - key: aci_interface_rx_multicast_bytes
-          property_name: multicastCum
-          type: counter
-          help_text: The number of multicast bytes received on the interface
-            since it was integrated into the fabric.
-        - key: aci_interface_rx_broadcast_bytes
-          property_name: floodCum
-          type: counter
-          help_text: The number of broadcast bytes received on the interface
-            since it was integrated into the fabric.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
-    interface_tx_stats:
-      class_name: eqptEgrBytes5min
-      metrics:
-        - key: aci_interface_tx_unicast_bytes
-          property_name: unicastCum
-          type: counter
-          help_text: The number of unicast bytes transmitted on the interface
-            since it was integrated into the fabric.
-        - key: aci_interface_tx_multicast_bytes
-          property_name: multicastCum
-          type: counter
-          help_text: The number of multicast bytes transmitted on the interface
-            since it was integrated into the fabric.
-        - key: aci_interface_tx_broadcast_bytes
-          property_name: floodCum
-          type: counter
-          help_text: The number of broadcast bytes transmitted on the interface
-            since it was integrated into the fabric.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
-    interface_rx_err_stats:
-      class_name: eqptIngrDropPkts5min
-      metrics:
-        - key: aci_interface_rx_buffer_dropped_pkts
-          property_name: bufferCum
-          type: counter
-          help_text: The number of packets dropped by the interface due to a
-            buffer overrun while receiving since it was integrated into the
-            fabric.
-        - key: aci_interface_rx_error_dropped_pkts
-          property_name: errorCum
-          type: counter
-          help_text: The number of packets dropped by the interface due to a
-            packet error while receiving since it was integrated into the
-            fabric.
-        - key: aci_interface_rx_forwarding_dropped_pkts
-          property_name: forwardingCum
-          type: counter
-          help_text: The number of packets dropped by the interface due to a
-            forwarding issue while receiving since it was integrated into the
-            fabric.
-        - key: aci_interface_rx_loadbal_dropped_pkts
-          property_name: lbCum
-          type: counter
-          help_text: The number of packets dropped by the interface due to a
-            load balancing issue while receiving since it was integrated into
-            the fabric.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
-    interface_tx_err_stats:
-      class_name: eqptEgrDropPkts5min
-      metrics:
-        - key: aci_interface_tx_queue_dropped_pkts
-          property_name: afdWredCum
-          type: counter
-          help_text: The number of packets dropped by the interface during queue
-            management while transmitting since it was integrated into the
-            fabric.
-        - key: aci_interface_tx_buffer_dropped_pkts
-          property_name: bufferCum
-          type: counter
-          help_text: The number of packets dropped by the interface due to a
-            buffer overrun while transmitting since it was integrated into the
-            fabric.
-        - key: aci_interface_tx_error_dropped_pkts
-          property_name: errorCum
-          type: counter
-          help_text: The number of packets dropped by the interface due to a
-            packet error while transmitting since it was integrated into the
-            fabric.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
-    fru_power_stats:
-      class_name: eqptFruPower5min
-      metrics:
-        - key: aci_fru_power_drawn_watts
-          property_name: drawnLast
-          type: gauge
-          help_text: The current amount of power, in watts, drawn by the
-            Field-Replaceable Unit.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
-    fan_rpm_stats:
-      class_name: eqptFanStats5min
-      metrics:
-        - key: aci_fan_rpm
-          property_name: speedLast
-          type: gauge
-          help_text: The current speed, in rotations per minute, of the fan.
-        - key: aci_fan_pwm
-          property_name: pwmLast
-          type: gauge
-          help_text: The current Pulse-Width Modulation value of the fan.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
-    psu_power_stats:
-      class_name: eqptPsPower5min
-      metrics:
-        - key: aci_psu_power_drawn_watts
-          property_name: drawnLast
-          type: gauge
-          help_text: The current power, in watts, drawn from the power supply.
-        - key: aci_psu_power_supplied_watts
-          property_name: suppliedLast
-          type: gauge
-          help_text: The current power, in watts, supplied by the power supply.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
-    temp_stats:
-      class_name: eqptTemp5min
-      metrics:
-        - key: aci_sensor_temperature_celsius
-          property_name: currentLast
-          type: gauge
-          help_text: The current temperature, in degrees Celsius, measured by
-            the sensor.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)(?:-(?P<slot>[^/]+))?/(?P<device>[^/]+)/sensor-(?P<sensorNumber>[^/]+)/"
-    switch_cpu_stats:
-      class_name: procSysCPU5min
-      metrics:
-        - key: aci_switch_cpu_usage_kernel_percent
-          property_name: kernelLast
-          type: gauge
-          help_text: The current Central Processing Unit usage, in percent, of
-            the switch by kernel processes.
-        - key: aci_switch_cpu_usage_user_percent
-          property_name: userLast
-          type: gauge
-          help_text: The current Central Processing Unit usage, in percent, of
-            the switch by user processes.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/"
-    fabric_health_score:
-      class_name: fabricOverallHealth5min
-      metrics:
-        - key: aci_fabric_health_score
-          property_name: healthLast
-          type: gauge
-          help_text: The current overall fabric health score.
-      labels:
-        - property_name: dn
-          regex: "^topology/[^/]+$"
-          regex_must_match: true
-    pod_health_score:
-      class_name: fabricOverallHealth5min
-      metrics:
-        - key: aci_pod_health_score
-          property_name: healthLast
-          type: gauge
-          help_text: The current health score of a single pod in the fabric.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/[^/]+$"
-          regex_must_match: true
-    node_health_score:
-      class_name: fabricNodeHealth5min
-      metrics:
-        - key: aci_node_health_score
-          property_name: healthLast
-          type: gauge
-          help_text: The current health score of a single node in the fabric.
-      labels:
-        - property_name: dn
-          regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/"
-    tenant_health_score:
-      class_name: fvOverallHealth15min
-      metrics:
-        - key: aci_tenant_health_score
-          property_name: healthLast
-          type: gauge
-          help_text: The current health score of a single tenant in the fabric.
-      labels:
-        - property_name: dn
-          regex: "^uni/tn-(?P<tenant>[^/]+)/"
+fabrics:
+  velvetfabric:
+    controllers:
+      - apic1.velvet.aci.example.com
+      - apic2.velvet.aci.example.com
+      - apic3.velvet.aci.example.com
+    auth:
+      username: moniteur
+      password: F4k3p4ssw0rd!
+  linenfabric:
+    controllers:
+      - apic1.linen.aci.example.com
+      - apic2.linen.aci.example.com
+      - apic3.linen.aci.example.com
+    auth:
+      username: moniteur
+      password: St4g1ngp4ssw0rd!
+common_queries:
+  dom_stats:
+    class_name: ethpmDOMStats
+    scope: children
+    metrics:
+      - key: aci_dom_value
+        property_name: value
+        type: gauge
+        help_text: The current value of this Digital Optical Monitoring gauge.
+      - key: aci_dom_high_alarm_value
+        property_name: hiAlarm
+        type: gauge
+        help_text: The high alarm value of this Digital Optical Monitoring
+          gauge; if the current value is higher than this value, it signifies
+          a critical state.
+      - key: aci_dom_high_warning_value
+        property_name: hiWarn
+        type: gauge
+        help_text: The high warning value of this Digital Optical Monitoring
+          gauge; if the current value is higher than this value (but lower
+          than the high alarm value), it signifies a warning state.
+      - key: aci_dom_low_alarm_value
+        property_name: loAlarm
+        type: gauge
+        help_text: The low alarm value of this Digital Optical Monitoring
+          gauge; if the current value is lower than this value, it signifies a
+          critical state.
+      - key: aci_dom_low_warning_value
+        property_name: loWarn
+        type: gauge
+        help_text: The low warning value of this Digital Optical Monitoring
+          gauge; if the current value is lower than this value (but higher
+          than the low alarm value), it signifies a warning state.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"
+  interface_info:
+    class_name: ethpmPhysIf
+    metrics:
+      - key: aci_interface_oper_speed_bps
+        property_name: operSpeed
+        type: gauge
+        help_text: The current operational speed of the interface, in bits per
+          second.
+        cases:
+          'unknown':            0
+          '100M':       100000000
+          '1G':        1000000000
+          '10G':      10000000000
+          '25G':      25000000000
+          '40G':      40000000000
+          '100G':    100000000000
+      - key: aci_interface_oper_state
+        property_name: operSt
+        type: gauge
+        help_text: The current operational state of the interface.
+          (0=unknown, 1=down, 2=up, 3=link-up)
+        cases:
+          'unknown': 0
+          'down': 1
+          'up': 2
+          'link-up': 3
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"
+  interface_rx_stats:
+    class_name: eqptIngrBytes5min
+    metrics:
+      - key: aci_interface_rx_unicast_bytes
+        property_name: unicastCum
+        type: counter
+        help_text: The number of unicast bytes received on the interface since
+          it was integrated into the fabric.
+      - key: aci_interface_rx_multicast_bytes
+        property_name: multicastCum
+        type: counter
+        help_text: The number of multicast bytes received on the interface
+          since it was integrated into the fabric.
+      - key: aci_interface_rx_broadcast_bytes
+        property_name: floodCum
+        type: counter
+        help_text: The number of broadcast bytes received on the interface
+          since it was integrated into the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+  interface_tx_stats:
+    class_name: eqptEgrBytes5min
+    metrics:
+      - key: aci_interface_tx_unicast_bytes
+        property_name: unicastCum
+        type: counter
+        help_text: The number of unicast bytes transmitted on the interface
+          since it was integrated into the fabric.
+      - key: aci_interface_tx_multicast_bytes
+        property_name: multicastCum
+        type: counter
+        help_text: The number of multicast bytes transmitted on the interface
+          since it was integrated into the fabric.
+      - key: aci_interface_tx_broadcast_bytes
+        property_name: floodCum
+        type: counter
+        help_text: The number of broadcast bytes transmitted on the interface
+          since it was integrated into the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+  interface_rx_err_stats:
+    class_name: eqptIngrDropPkts5min
+    metrics:
+      - key: aci_interface_rx_buffer_dropped_pkts
+        property_name: bufferCum
+        type: counter
+        help_text: The number of packets dropped by the interface due to a
+          buffer overrun while receiving since it was integrated into the
+          fabric.
+      - key: aci_interface_rx_error_dropped_pkts
+        property_name: errorCum
+        type: counter
+        help_text: The number of packets dropped by the interface due to a
+          packet error while receiving since it was integrated into the
+          fabric.
+      - key: aci_interface_rx_forwarding_dropped_pkts
+        property_name: forwardingCum
+        type: counter
+        help_text: The number of packets dropped by the interface due to a
+          forwarding issue while receiving since it was integrated into the
+          fabric.
+      - key: aci_interface_rx_loadbal_dropped_pkts
+        property_name: lbCum
+        type: counter
+        help_text: The number of packets dropped by the interface due to a
+          load balancing issue while receiving since it was integrated into
+          the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+  interface_tx_err_stats:
+    class_name: eqptEgrDropPkts5min
+    metrics:
+      - key: aci_interface_tx_queue_dropped_pkts
+        property_name: afdWredCum
+        type: counter
+        help_text: The number of packets dropped by the interface during queue
+          management while transmitting since it was integrated into the
+          fabric.
+      - key: aci_interface_tx_buffer_dropped_pkts
+        property_name: bufferCum
+        type: counter
+        help_text: The number of packets dropped by the interface due to a
+          buffer overrun while transmitting since it was integrated into the
+          fabric.
+      - key: aci_interface_tx_error_dropped_pkts
+        property_name: errorCum
+        type: counter
+        help_text: The number of packets dropped by the interface due to a
+          packet error while transmitting since it was integrated into the
+          fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+  fru_power_stats:
+    class_name: eqptFruPower5min
+    metrics:
+      - key: aci_fru_power_drawn_watts
+        property_name: drawnLast
+        type: gauge
+        help_text: The current amount of power, in watts, drawn by the
+          Field-Replaceable Unit.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
+  fan_rpm_stats:
+    class_name: eqptFanStats5min
+    metrics:
+      - key: aci_fan_rpm
+        property_name: speedLast
+        type: gauge
+        help_text: The current speed, in rotations per minute, of the fan.
+      - key: aci_fan_pwm
+        property_name: pwmLast
+        type: gauge
+        help_text: The current Pulse-Width Modulation value of the fan.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
+  psu_power_stats:
+    class_name: eqptPsPower5min
+    metrics:
+      - key: aci_psu_power_drawn_watts
+        property_name: drawnLast
+        type: gauge
+        help_text: The current power, in watts, drawn from the power supply.
+      - key: aci_psu_power_supplied_watts
+        property_name: suppliedLast
+        type: gauge
+        help_text: The current power, in watts, supplied by the power supply.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
+  temp_stats:
+    class_name: eqptTemp5min
+    metrics:
+      - key: aci_sensor_temperature_celsius
+        property_name: currentLast
+        type: gauge
+        help_text: The current temperature, in degrees Celsius, measured by
+          the sensor.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)(?:-(?P<slot>[^/]+))?/(?P<device>[^/]+)/sensor-(?P<sensorNumber>[^/]+)/"
+  switch_cpu_stats:
+    class_name: procSysCPU5min
+    metrics:
+      - key: aci_switch_cpu_usage_kernel_percent
+        property_name: kernelLast
+        type: gauge
+        help_text: The current Central Processing Unit usage, in percent, of
+          the switch by kernel processes.
+      - key: aci_switch_cpu_usage_user_percent
+        property_name: userLast
+        type: gauge
+        help_text: The current Central Processing Unit usage, in percent, of
+          the switch by user processes.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/"
+  fabric_health_score:
+    class_name: fabricOverallHealth5min
+    metrics:
+      - key: aci_fabric_health_score
+        property_name: healthLast
+        type: gauge
+        help_text: The current overall fabric health score.
+    labels:
+      - property_name: dn
+        regex: "^topology/[^/]+$"
+        regex_must_match: true
+  pod_health_score:
+    class_name: fabricOverallHealth5min
+    metrics:
+      - key: aci_pod_health_score
+        property_name: healthLast
+        type: gauge
+        help_text: The current health score of a single pod in the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/[^/]+$"
+        regex_must_match: true
+  node_health_score:
+    class_name: fabricNodeHealth5min
+    metrics:
+      - key: aci_node_health_score
+        property_name: healthLast
+        type: gauge
+        help_text: The current health score of a single node in the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/"
+  tenant_health_score:
+    class_name: fvOverallHealth15min
+    metrics:
+      - key: aci_tenant_health_score
+        property_name: healthLast
+        type: gauge
+        help_text: The current health score of a single tenant in the fabric.
+    labels:
+      - property_name: dn
+        regex: "^uni/tn-(?P<tenant>[^/]+)/"
 
