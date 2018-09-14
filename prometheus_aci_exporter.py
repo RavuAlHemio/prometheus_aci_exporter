@@ -271,7 +271,7 @@ def main():
     aci_collector = AciCollector(config)
     REGISTRY.register(aci_collector)
 
-    if 'SIGHUP' in dir(signal):
+    if hasattr(signal, 'SIGHUP'):
         sighup_handler = get_sighup_handler(aci_collector, args.config_file)
         signal.signal(signal.SIGHUP, sighup_handler)
 
