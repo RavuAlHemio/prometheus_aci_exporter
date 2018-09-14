@@ -15,6 +15,13 @@ fabrics:
     auth:
       username: moniteur
       password: St4g1ngp4ssw0rd!
+    queries:
+      faults:
+        class_name: faultInst
+        filter: eq(faultInst.ack,"no")
+        count_metric: aci_fault_count_noack
+        count_metric_help_text: The number of unacknowledged faults currently
+          raised in the fabric.
 common_queries:
   dom_stats:
     class_name: ethpmDOMStats

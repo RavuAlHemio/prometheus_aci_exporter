@@ -138,33 +138,43 @@ class AciCollector(object):
             filter_string = query.get('filter', None)
 
             instances = session.obtain_instances(class_name, filter_string, scope)
-            all_values_labels = []
+
             metric_definitions = {}
+
+            count_metric = query.get('count_metric', None)
+            if count_metric is not None:
+                count_labels = {}
+                self._add_common_labels(count_labels, query, query_name, fabric_name, class_name)
+
+                count_help_text = query.get('count_metric_help_text', '')
+                # instance counts are always gauges
+                count_metric_object = GaugeMetricFamily(
+                    count_metric, count_help_text, labels=count_labels.keys()
+                )
+                count_metric_object.add_metric(count_labels.values(), len(instances['imdata']))
+                metric_definitions[count_metric] = count_metric_object
+
+            all_values_labels = []
             for instance in instances['imdata']:
                 drop_instance = False
                 class_name = list(instance.keys())[0]
                 attributes = instance[class_name]['attributes']
 
                 labels = {}
-                if not query.get('omit_query_name_label', False):
-                    labels['queryName'] = query_name
-                if not query.get('omit_fabric_label', False):
-                    labels['fabric'] = fabric_name
-                if not query.get('omit_class_name_label', False):
-                    labels['className'] = class_name
-                for label_definition in query['labels']:
+                self._add_common_labels(labels, query, query_name, fabric_name, class_name)
+                for label_definition in query.get('labels', list()):
                     updated_labels = self.process_value(attributes, label_definition)
                     if updated_labels is None:
                         drop_instance = True
                         break
-                    labels.update(self.process_value(attributes, label_definition))
+                    labels.update(updated_labels)
 
                 if drop_instance:
                     continue
 
                 values = {}
 
-                for value_definition in query['metrics']:
+                for value_definition in query.get('metrics', list()):
                     # extract the definition
                     metric_name = value_definition['key']
                     metric_type = value_definition['type']
@@ -179,7 +189,7 @@ class AciCollector(object):
                     if value is None:
                         drop_instance = True
                         break
-                    values.update(self.process_value(attributes, value_definition))
+                    values.update(value)
 
                 if drop_instance:
                     continue
@@ -196,6 +206,16 @@ class AciCollector(object):
 
             for metric_object in metric_definitions.values():
                 yield metric_object
+
+
+    @staticmethod
+    def _add_common_labels(labels, query, query_name, fabric_name, class_name):
+        if not query.get('omit_query_name_label', False):
+            labels['queryName'] = query_name
+        if not query.get('omit_fabric_label', False):
+            labels['fabric'] = fabric_name
+        if not query.get('omit_class_name_label', False):
+            labels['className'] = class_name
 
 
     def process_value(self, attributes, definition):
