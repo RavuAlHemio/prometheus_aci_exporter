@@ -4,11 +4,16 @@ from itertools import chain
 import re
 import signal
 import time
+from typing import Any, Callable, Dict, Iterable, List, Optional, Pattern, Union
 import urllib.parse as up
 from prometheus_client import REGISTRY, start_http_server
-from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
+from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily, Metric
 import requests
 import yaml
+
+
+RealNumber = Union[int, float]
+JsonType = Union[None, str, int, float, bool, List['JsonType'], Dict[str, 'JsonType']]
 
 
 DEFAULT_PORT = 9377
@@ -22,13 +27,13 @@ METRIC_TYPES = {
 
 
 class AciSession(object):
-    def __init__(self, controller):
-        self.controller = controller
-        self.timeout = DEFAULT_TIMEOUT
-        self.auth_token = None
-        self.tls_verify = False
+    def __init__(self, controller: str) -> None:
+        self.controller: str = controller
+        self.timeout: RealNumber = DEFAULT_TIMEOUT
+        self.auth_token: Optional[str] = None
+        self.tls_verify: Union[str, bool] = False
 
-    def auth(self, auth_config):
+    def auth(self, auth_config: Dict[str, JsonType]) -> None:
         # TODO: certificate auth
 
         controller_ca_cert = auth_config.get('controller_ca_cert', None)
@@ -53,7 +58,11 @@ class AciSession(object):
 
         self.auth_token = response.cookies[APIC_COOKIE_NAME]
 
-    def obtain_instances(self, class_name, filter_string=None, scope="self"):
+
+    def obtain_instances(
+            self, class_name: str, filter_string: Optional[str] = None,
+            scope: str = "self"
+    ) -> Dict[str, JsonType]:
         escaped_class = up.quote(class_name)
 
         query_options = {
@@ -75,13 +84,13 @@ class AciSession(object):
 
 
 class AciCollector(object):
-    def __init__(self, config):
-        self.config = config
-        self.pending_config = None
-        self.timeout = DEFAULT_TIMEOUT
-        self.regex_cache = {}
+    def __init__(self, config: Dict[str, JsonType]) -> None:
+        self.config: Dict[str, JsonType] = config
+        self.pending_config: Optional[Dict[str, JsonType]] = None
+        self.timeout: RealNumber = DEFAULT_TIMEOUT
+        self.regex_cache: Dict[str, Pattern] = {}
 
-    def collect(self):
+    def collect(self) -> Iterable[Metric]:
         if self.pending_config is not None:
             self.config = self.pending_config
             self.pending_config = None
@@ -124,7 +133,10 @@ class AciCollector(object):
 
         yield scrape_duration_metric
 
-    def collect_fabric(self, fabric_name, fabric, controller, common_queries):
+    def collect_fabric(
+            self, fabric_name: str, fabric: Dict[str, JsonType], controller: str,
+            common_queries: Dict[str, JsonType]
+    ) -> Iterable[Metric]:
         session = AciSession(controller)
         session.auth(fabric['auth'])
 
@@ -209,7 +221,10 @@ class AciCollector(object):
 
 
     @staticmethod
-    def _add_common_labels(labels, query, query_name, fabric_name, class_name):
+    def _add_common_labels(
+            labels: Dict[str, str], query: Dict[str, JsonType],
+            query_name: str, fabric_name: str, class_name: str
+    ) -> None:
         if not query.get('omit_query_name_label', False):
             labels['queryName'] = query_name
         if not query.get('omit_fabric_label', False):
@@ -218,7 +233,9 @@ class AciCollector(object):
             labels['className'] = class_name
 
 
-    def process_value(self, attributes, definition):
+    def process_value(
+            self, attributes: Dict[str, JsonType], definition: Dict[str, JsonType]
+    ) -> JsonType:
         property_name = definition['property_name']
         property_value = attributes.get(property_name, None)
         if property_value is None:
@@ -272,21 +289,23 @@ class AciCollector(object):
         return property_value
 
 
-def load_config(config_file_name):
+def load_config(config_file_name: str) -> JsonType:
     with open(config_file_name, "r", encoding="utf-8") as config_file:
         return yaml.safe_load(config_file)
 
 
-def get_sighup_handler(aci_collector, config_file_name):
+def get_sighup_handler(
+        aci_collector: AciCollector, config_file_name: str
+) -> Callable[[Any, Any], None]:
 
-    def handle_sighup(_signal_number, _stack_frame):
+    def handle_sighup(_signal_number, _stack_frame) -> None:
         config = load_config(config_file_name)
         aci_collector.pending_config = config
 
     return handle_sighup
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config.file", dest="config_file", default="aci.yml")
     parser.add_argument("--web.listen-port", dest="web_listen_port", type=int, default=DEFAULT_PORT)
