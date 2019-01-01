@@ -30,6 +30,7 @@ class AciSession(object):
     def __init__(self, controller: str) -> None:
         self.controller: str = controller
         self.timeout: RealNumber = DEFAULT_TIMEOUT
+        self.auth_user: Optional[str] = None
         self.auth_token: Optional[str] = None
         self.tls_verify: Union[str, bool] = False
 
@@ -56,7 +57,31 @@ class AciSession(object):
         )
         response.raise_for_status()
 
+        self.auth_user = auth_config['username']
         self.auth_token = response.cookies[APIC_COOKIE_NAME]
+
+
+    def logout(self) -> None:
+        if self.auth_user is None:
+            return
+
+        logout_payload = {
+            "aaaUser": {
+                "attributes": {
+                    "name": self.auth_user,
+                }
+            }
+        }
+        response = requests.post(
+            f"https://{self.controller}/api/aaaLogout.json",
+            json=logout_payload,
+            timeout=self.timeout,
+            verify=self.tls_verify,
+        )
+        response.raise_for_status()
+
+        self.auth_user = None
+        self.auth_token = None
 
 
     def obtain_instances(
@@ -218,6 +243,8 @@ class AciCollector(object):
 
             for metric_object in metric_definitions.values():
                 yield metric_object
+
+        session.logout()
 
 
     @staticmethod
