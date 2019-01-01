@@ -75,6 +75,7 @@ class AciSession(object):
         response = requests.post(
             f"https://{self.controller}/api/aaaLogout.json",
             json=logout_payload,
+            cookies={APIC_COOKIE_NAME: self.auth_token},
             timeout=self.timeout,
             verify=self.tls_verify,
         )
