@@ -275,19 +275,20 @@ class AciCollector(object):
         invalid_below = definition.get('invalid_below', None)
         clamp_bottom = definition.get('clamp_bottom', None)
         if invalid_below is not None:
-            if property_value < invalid_below:
+            # convert property_value to the type of invalid_below before comparing
+            if type(invalid_below)(property_value) < invalid_below:
                 return None
         elif clamp_bottom is not None:
-            if property_value < clamp_bottom:
+            if type(invalid_below)(clamp_bottom) < clamp_bottom:
                 property_value = clamp_bottom
 
         invalid_above = definition.get('invalid_above', None)
         clamp_top = definition.get('clamp_top', None)
         if invalid_above is not None:
-            if property_value > invalid_above:
+            if type(invalid_above)(property_value) > invalid_above:
                 return None
         if clamp_top is not None:
-            if property_value > clamp_top:
+            if type(clamp_top)(property_value) > clamp_top:
                 property_value = clamp_top
 
         # regex extraction
