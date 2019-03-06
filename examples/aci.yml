@@ -238,11 +238,15 @@ common_queries:
     metrics:
       - key: aci_switch_cpu_usage_kernel_percent
         property_name: kernelLast
+        invalid_below: 0.0
+        invalid_above: 100.0
         type: gauge
         help_text: The current Central Processing Unit usage, in percent, of
           the switch by kernel processes.
       - key: aci_switch_cpu_usage_user_percent
         property_name: userLast
+        invalid_below: 0.0
+        invalid_above: 100.0
         type: gauge
         help_text: The current Central Processing Unit usage, in percent, of
           the switch by user processes.

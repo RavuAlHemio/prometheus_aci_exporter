@@ -271,6 +271,25 @@ class AciCollector(object):
 
         # transformations?
 
+        # range validity
+        invalid_below = definition.get('invalid_below', None)
+        clamp_bottom = definition.get('clamp_bottom', None)
+        if invalid_below is not None:
+            if property_value < invalid_below:
+                return None
+        elif clamp_bottom is not None:
+            if property_value < clamp_bottom:
+                property_value = clamp_bottom
+
+        invalid_above = definition.get('invalid_above', None)
+        clamp_top = definition.get('clamp_top', None)
+        if invalid_above is not None:
+            if property_value > invalid_above:
+                return None
+        if clamp_top is not None:
+            if property_value > clamp_top:
+                property_value = clamp_top
+
         # regex extraction
         regex_str = definition.get('regex', None)
         regex_must_match = definition.get('regex_must_match', False)
