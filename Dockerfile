@@ -1,5 +1,8 @@
 FROM python:3-slim
 
+ENV PYTHONWARNINGS "ignore:Unverified HTTPS request"
+
+
 WORKDIR /opt/prometheus_aci_exporter
 
 COPY requirements.txt ./
