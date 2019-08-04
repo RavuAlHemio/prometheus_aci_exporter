@@ -291,7 +291,7 @@ class AciCollector(object):
             if type(invalid_below)(property_value) < invalid_below:
                 return None
         elif clamp_bottom is not None:
-            if type(invalid_below)(clamp_bottom) < clamp_bottom:
+            if type(clamp_bottom)(property_value) < clamp_bottom:
                 property_value = clamp_bottom
 
         invalid_above = definition.get('invalid_above', None)
