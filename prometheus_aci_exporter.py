@@ -272,7 +272,7 @@ class AciCollector(object):
         # transformations?
 
         # type conversion
-        type_key = definition.get('type', None)
+        type_key = definition.get('value_type', None)
         if type_key is not None:
             type_func = {
                 'str': str,
