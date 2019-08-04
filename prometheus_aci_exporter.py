@@ -271,6 +271,18 @@ class AciCollector(object):
 
         # transformations?
 
+        # type conversion
+        type_key = definition.get('type', None)
+        if type_key is not None:
+            type_func = {
+                'str': str,
+                'int': int,
+                'float': float,
+            }.get(type_key, None)
+            if type_func is None:
+                raise ValueError(f"unknown type conversion function {type_func!r}")
+            property_value = type_func(property_value)
+
         # range validity
         invalid_below = definition.get('invalid_below', None)
         clamp_bottom = definition.get('clamp_bottom', None)
