@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import argparse
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from itertools import chain
 import re
 import signal
+from socketserver import ThreadingMixIn
+from threading import Thread
 import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Pattern, Union
 import urllib.parse as up
-from prometheus_client import REGISTRY, start_http_server
-from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily, Metric
 import requests
 import yaml
 
@@ -19,11 +20,93 @@ JsonType = Union[None, str, int, float, bool, List['JsonType'], Dict[str, 'JsonT
 DEFAULT_PORT = 9377
 DEFAULT_TIMEOUT = 10
 APIC_COOKIE_NAME = "APIC-cookie"
-METRIC_TYPES = {
-    'gauge': GaugeMetricFamily,
-    'counter': CounterMetricFamily,
-    # TODO: histogram and summary
-}
+PROM_METRIC_NAME_RE = re.compile("^[a-zA-Z_:][a-zA-Z0-9_:]*$")
+PROM_LABEL_NAME_RE = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+class Metric:
+    def __init__(self, metric_name, metric_type, help_text=None, label_keys=None):
+        if label_keys is None:
+            label_keys = ()
+
+        if PROM_METRIC_NAME_RE.match(metric_name) is None:
+            raise ValueError(f"invalid metric_name {metric_name!r} (must match {PROM_METRIC_NAME_RE.pattern!r})")
+
+        for key in label_keys:
+            if PROM_LABEL_NAME_RE.match(key) is None:
+                raise ValueError(f"invalid entry {key!r} in label_keys (must match {PROM_LABEL_NAME_RE.pattern!r})")
+
+        self.metric_name = metric_name
+        self.metric_type = metric_type
+        self.help_text = help_text
+        self.label_keys = tuple(label_keys)
+
+        self._values = []
+
+    def add_value(self, value, label_values=None, timestamp=None):
+        # timestamp: milliseconds since Unix epoch (or None)
+        if label_values is None:
+            label_values = ()
+
+        label_values = tuple(label_values)
+        if len(label_values) != len(self.label_keys):
+            raise ValueError(f"len(label_values) ({len(label_values)}) does not equal len(self.label_keys) ({len(self.label_keys)})")
+
+        self._values.append((value, timestamp, label_values))
+
+    @staticmethod
+    def sanitize_help_text(help_text):
+        return help_text.replace("\\", "\\\\").replace("\n", "\\n")
+
+    @staticmethod
+    def quote_label_value(lbl_val):
+        ret = ['"']
+        for c in lbl_val:
+            if c == '\\':
+                ret.append('\\\\')
+            elif c == '"':
+                ret.append('\\"')
+            elif c == '\n':
+                ret.append('\\n')
+            else:
+                ret.append(c)
+        ret.append('"')
+        return "".join(ret)
+
+    def generate(self):
+        lines = []
+
+        metric_type = (
+            self.metric_type
+            if self.metric_type in ("counter", "gauge", "histogram", "summary")
+            else "untyped"
+        )
+        lines.append(f"# TYPE {self.metric_name} {metric_type}")
+
+        if self.help_text is not None:
+            help_text_sanitized = self.help_text.replace("\\", "\\\\").replace("\n", "\\n")
+            lines.append(f"# HELP {self.metric_name} {help_text_sanitized}")
+
+        for val, tstamp, lbl_vals in self._values:
+            ob, cb = '{', '}'
+            line_pieces = [self.metric_name]
+
+            lbl_kvps = [
+                f"{k}={Metric.quote_label_value(v)}"
+                for (k, v)
+                in zip(self.label_keys, lbl_vals)
+            ]
+            if lbl_kvps:
+                line_pieces.append(f"{ob}{','.join(lbl_kvps)}{cb}")
+
+            line_pieces.append(f" {val}")
+
+            if tstamp is not None:
+                line_pieces.append(f" {tstamp}")
+
+            lines.append("".join(line_pieces))
+
+        return "".join(f"{ln}\n" for ln in lines)
 
 
 class AciSession(object):
@@ -121,10 +204,11 @@ class AciCollector(object):
             self.config = self.pending_config
             self.pending_config = None
 
-        scrape_duration_metric = GaugeMetricFamily(
+        scrape_duration_metric = Metric(
             'aci_scrape_duration_seconds',
+            'gauge',
             'The duration, in seconds, of the last scrape of the fabric.',
-            labels=['fabric']
+            label_keys=('fabric',)
         )
 
         common_queries = self.config.get('common_queries', dict())
@@ -155,7 +239,7 @@ class AciCollector(object):
 
                 # note that the order is reset when the configuration is reloaded (e.g. SIGHUP)
 
-            scrape_duration_metric.add_metric([fabric_name], time_end - time_start)
+            scrape_duration_metric.add_value(time_end - time_start, (fabric_name,))
 
         yield scrape_duration_metric
 
@@ -186,10 +270,10 @@ class AciCollector(object):
 
                 count_help_text = query.get('count_metric_help_text', '')
                 # instance counts are always gauges
-                count_metric_object = GaugeMetricFamily(
-                    count_metric, count_help_text, labels=count_labels.keys()
+                count_metric_object = Metric(
+                    count_metric, 'gauge', count_help_text, label_keys=count_labels.keys()
                 )
-                count_metric_object.add_metric(count_labels.values(), len(instances['imdata']))
+                count_metric_object.add_value(len(instances['imdata']), count_labels.values())
                 metric_definitions[count_metric] = count_metric_object
 
             all_values_labels = []
@@ -217,9 +301,11 @@ class AciCollector(object):
                     metric_name = value_definition['key']
                     metric_type = value_definition['type']
                     help_text = value_definition.get('help_text', '')
-                    family = METRIC_TYPES[metric_type]
 
-                    metric_object = family(metric_name, help_text, labels=labels.keys())
+                    metric_object = Metric(
+                        metric_name, metric_type, help_text,
+                        label_keys=labels.keys()
+                    )
                     metric_definitions[metric_name] = metric_object
 
                     # store the value
@@ -240,7 +326,7 @@ class AciCollector(object):
             for values, labels in all_values_labels:
                 for key, value in values.items():
                     metric_object = metric_definitions[key]
-                    metric_object.add_metric(labels.values(), float(value))
+                    metric_object.add_value(float(value), labels.values())
 
             for metric_object in metric_definitions.values():
                 yield metric_object
@@ -365,6 +451,50 @@ def get_sighup_handler(
     return handle_sighup
 
 
+class MetricsHandler(BaseHTTPRequestHandler):
+    collector = None
+
+    def do_GET(self):
+        collector = self.collector
+        generated_lines = [
+            metric.generate().encode('utf-8')
+            for metric
+            in collector.collect()
+        ]
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+        self.end_headers()
+
+        for line in generated_lines:
+            # lines are already terminated appropriately
+            self.wfile.write(line)
+
+    def log_message(self, format, *args):
+        return
+
+    @classmethod
+    def factory(cls, collector):
+        cls_name = str(cls.__name__)
+        CustomizedMetricsHandler = type(
+            cls_name,
+            (cls, object),
+            {"collector": collector}
+        )
+        return CustomizedMetricsHandler
+
+
+class ThreadingSimpleHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
+
+
+def start_http_server(collector, port, addr=''):
+    CustomMetricsHandler = MetricsHandler.factory(collector)
+    server = ThreadingSimpleHTTPServer((addr, port), CustomMetricsHandler)
+    server_thread = Thread(target=server.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config.file", dest="config_file", default="aci.yml")
@@ -375,13 +505,12 @@ def main() -> None:
     config = load_config(args.config_file)
 
     aci_collector = AciCollector(config)
-    REGISTRY.register(aci_collector)
 
     if hasattr(signal, 'SIGHUP'):
         sighup_handler = get_sighup_handler(aci_collector, args.config_file)
         signal.signal(signal.SIGHUP, sighup_handler)
 
-    start_http_server(args.web_listen_port, args.web_listen_address)
+    start_http_server(aci_collector, args.web_listen_port, args.web_listen_address)
 
     while True:
         time.sleep(9001)

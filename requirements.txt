@@ -1,3 +1,2 @@
-prometheus_client
 requests
 PyYAML
