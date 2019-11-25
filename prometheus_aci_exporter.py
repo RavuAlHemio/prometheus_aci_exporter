@@ -40,11 +40,12 @@ class Metric:
         self.metric_type = metric_type
         self.help_text = help_text
         self.label_keys = tuple(label_keys)
+        self.unit = None
 
         self._values = []
 
     def add_value(self, value, label_values=None, timestamp=None):
-        # timestamp: milliseconds since Unix epoch (or None)
+        # timestamp: seconds since Unix epoch (or None)
         if label_values is None:
             label_values = ()
 
@@ -59,8 +60,8 @@ class Metric:
         return help_text.replace("\\", "\\\\").replace("\n", "\\n")
 
     @staticmethod
-    def quote_label_value(lbl_val):
-        ret = ['"']
+    def escape_label_value(lbl_val):
+        ret = []
         for c in lbl_val:
             if c == '\\':
                 ret.append('\\\\')
@@ -70,10 +71,16 @@ class Metric:
                 ret.append('\\n')
             else:
                 ret.append(c)
-        ret.append('"')
         return "".join(ret)
 
-    def generate(self):
+    @staticmethod
+    def quote_label_value(lbl_val):
+        return f'"{Metric.escape_label_value(lbl_val)}"'
+
+    def generate(self, fmt='prometheus'):
+        if fmt not in ('prometheus', 'openmetrics'):
+            raise ValueError(f"unknown format: {fmt!r}")
+
         lines = []
 
         metric_type = (
@@ -81,20 +88,33 @@ class Metric:
             if self.metric_type in ("counter", "gauge", "histogram", "summary")
             else "untyped"
         )
-        lines.append(f"# TYPE {self.metric_name} {metric_type}")
+
+        metric_name, metric_name_tail = self.metric_name, ""
+        if metric_type == 'counter' and fmt != 'prometheus':
+            if metric_name.endswith("_total"):
+                metric_name = metric_name[:len("_total")]
+            metric_name_tail = "_total"
+
+        lines.append(f"# TYPE {metric_name} {metric_type}")
 
         if self.help_text is not None:
-            help_text_sanitized = self.help_text.replace("\\", "\\\\").replace("\n", "\\n")
-            lines.append(f"# HELP {self.metric_name} {help_text_sanitized}")
+            if fmt == 'prometheus':
+                help_text_sanitized = self.help_text.replace("\\", "\\\\").replace("\n", "\\n")
+            else:
+                help_text_sanitized = Metric.escape_label_value(self.help_text)
+            lines.append(f"# HELP {metric_name} {help_text_sanitized}")
+
+        if self.unit is not None and fmt != 'prometheus':
+            lines.append(f"# UNIT {metric_name} {self.unit}")
 
         for val, tstamp, lbl_vals in self._values:
             ob, cb = '{', '}'
-            line_pieces = [self.metric_name]
+            line_pieces = [metric_name, metric_name_tail]
 
             lbl_kvps = [
                 f"{k}={Metric.quote_label_value(v)}"
                 for (k, v)
-                in zip(self.label_keys, lbl_vals)
+                in sorted(zip(self.label_keys, lbl_vals))
             ]
             if lbl_kvps:
                 line_pieces.append(f"{ob}{','.join(lbl_kvps)}{cb}")
@@ -102,6 +122,9 @@ class Metric:
             line_pieces.append(f" {val}")
 
             if tstamp is not None:
+                if fmt == 'prometheus':
+                    # milliseconds instead of seconds
+                    tstamp *= 1000
                 line_pieces.append(f" {tstamp}")
 
             lines.append("".join(line_pieces))
@@ -455,19 +478,31 @@ class MetricsHandler(BaseHTTPRequestHandler):
     collector = None
 
     def do_GET(self):
+        output_format = 'prometheus'
+        accept_header = self.headers.get('Accept', '')
+        for accepted_type in accept_header.split(','):
+            if accepted_type.split(';')[0].strip() == 'application/openmetrics-text':
+                output_format = 'openmetrics'
+
         collector = self.collector
         generated_lines = [
-            metric.generate().encode('utf-8')
+            metric.generate(fmt=output_format).encode('utf-8')
             for metric
             in collector.collect()
         ]
         self.send_response(200)
-        self.send_header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+        if output_format == 'prometheus':
+            self.send_header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+        else:
+            self.send_header('Content-Type', 'application/openmetrics-text; version=0.0.1; charset=utf-8')
         self.end_headers()
 
         for line in generated_lines:
             # lines are already terminated appropriately
             self.wfile.write(line)
+
+        if output_format != 'prometheus':
+            self.wfile.write(b'# EOF\n')
 
     def log_message(self, format, *args):
         return
