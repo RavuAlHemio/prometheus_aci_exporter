@@ -476,13 +476,15 @@ def get_sighup_handler(
 
 class MetricsHandler(BaseHTTPRequestHandler):
     collector = None
+    args = None
 
     def do_GET(self):
         output_format = 'prometheus'
-        accept_header = self.headers.get('Accept', '')
-        for accepted_type in accept_header.split(','):
-            if accepted_type.split(';')[0].strip() == 'application/openmetrics-text':
-                output_format = 'openmetrics'
+        if getattr(self.args, 'web_openmetrics', False):
+            accept_header = self.headers.get('Accept', '')
+            for accepted_type in accept_header.split(','):
+                if accepted_type.split(';')[0].strip() == 'application/openmetrics-text':
+                    output_format = 'openmetrics'
 
         collector = self.collector
         generated_lines = [
@@ -508,12 +510,12 @@ class MetricsHandler(BaseHTTPRequestHandler):
         return
 
     @classmethod
-    def factory(cls, collector):
+    def factory(cls, collector, args):
         cls_name = str(cls.__name__)
         CustomizedMetricsHandler = type(
             cls_name,
             (cls, object),
-            {"collector": collector}
+            {"collector": collector, "args": args}
         )
         return CustomizedMetricsHandler
 
@@ -522,8 +524,8 @@ class ThreadingSimpleHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 
-def start_http_server(collector, port, addr=''):
-    CustomMetricsHandler = MetricsHandler.factory(collector)
+def start_http_server(collector, port, addr='', args=None):
+    CustomMetricsHandler = MetricsHandler.factory(collector, args)
     server = ThreadingSimpleHTTPServer((addr, port), CustomMetricsHandler)
     server_thread = Thread(target=server.serve_forever)
     server_thread.daemon = True
@@ -535,6 +537,7 @@ def main() -> None:
     parser.add_argument("--config.file", dest="config_file", default="aci.yml")
     parser.add_argument("--web.listen-port", dest="web_listen_port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--web.listen-address", dest="web_listen_address", type=str, default="")
+    parser.add_argument("--web.openmetrics", dest="web_openmetrics", action="store_true")
     args = parser.parse_args()
 
     config = load_config(args.config_file)
@@ -545,7 +548,7 @@ def main() -> None:
         sighup_handler = get_sighup_handler(aci_collector, args.config_file)
         signal.signal(signal.SIGHUP, sighup_handler)
 
-    start_http_server(aci_collector, args.web_listen_port, args.web_listen_address)
+    start_http_server(aci_collector, args.web_listen_port, args.web_listen_address, args)
 
     while True:
         time.sleep(9001)
