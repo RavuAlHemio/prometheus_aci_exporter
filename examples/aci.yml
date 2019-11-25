@@ -90,17 +90,17 @@ common_queries:
   interface_rx_stats:
     class_name: eqptIngrBytes5min
     metrics:
-      - key: aci_interface_rx_unicast_bytes
+      - key: aci_interface_rx_unicast_bytes_total
         property_name: unicastCum
         type: counter
         help_text: The number of unicast bytes received on the interface since
           it was integrated into the fabric.
-      - key: aci_interface_rx_multicast_bytes
+      - key: aci_interface_rx_multicast_bytes_total
         property_name: multicastCum
         type: counter
         help_text: The number of multicast bytes received on the interface
           since it was integrated into the fabric.
-      - key: aci_interface_rx_broadcast_bytes
+      - key: aci_interface_rx_broadcast_bytes_total
         property_name: floodCum
         type: counter
         help_text: The number of broadcast bytes received on the interface
@@ -111,17 +111,17 @@ common_queries:
   interface_tx_stats:
     class_name: eqptEgrBytes5min
     metrics:
-      - key: aci_interface_tx_unicast_bytes
+      - key: aci_interface_tx_unicast_bytes_total
         property_name: unicastCum
         type: counter
         help_text: The number of unicast bytes transmitted on the interface
           since it was integrated into the fabric.
-      - key: aci_interface_tx_multicast_bytes
+      - key: aci_interface_tx_multicast_bytes_total
         property_name: multicastCum
         type: counter
         help_text: The number of multicast bytes transmitted on the interface
           since it was integrated into the fabric.
-      - key: aci_interface_tx_broadcast_bytes
+      - key: aci_interface_tx_broadcast_bytes_total
         property_name: floodCum
         type: counter
         help_text: The number of broadcast bytes transmitted on the interface
@@ -132,25 +132,25 @@ common_queries:
   interface_rx_err_stats:
     class_name: eqptIngrDropPkts5min
     metrics:
-      - key: aci_interface_rx_buffer_dropped_pkts
+      - key: aci_interface_rx_buffer_dropped_pkts_total
         property_name: bufferCum
         type: counter
         help_text: The number of packets dropped by the interface due to a
           buffer overrun while receiving since it was integrated into the
           fabric.
-      - key: aci_interface_rx_error_dropped_pkts
+      - key: aci_interface_rx_error_dropped_pkts_total
         property_name: errorCum
         type: counter
         help_text: The number of packets dropped by the interface due to a
           packet error while receiving since it was integrated into the
           fabric.
-      - key: aci_interface_rx_forwarding_dropped_pkts
+      - key: aci_interface_rx_forwarding_dropped_pkts_total
         property_name: forwardingCum
         type: counter
         help_text: The number of packets dropped by the interface due to a
           forwarding issue while receiving since it was integrated into the
           fabric.
-      - key: aci_interface_rx_loadbal_dropped_pkts
+      - key: aci_interface_rx_loadbal_dropped_pkts_total
         property_name: lbCum
         type: counter
         help_text: The number of packets dropped by the interface due to a
@@ -162,19 +162,19 @@ common_queries:
   interface_tx_err_stats:
     class_name: eqptEgrDropPkts5min
     metrics:
-      - key: aci_interface_tx_queue_dropped_pkts
+      - key: aci_interface_tx_queue_dropped_pkts_total
         property_name: afdWredCum
         type: counter
         help_text: The number of packets dropped by the interface during queue
           management while transmitting since it was integrated into the
           fabric.
-      - key: aci_interface_tx_buffer_dropped_pkts
+      - key: aci_interface_tx_buffer_dropped_pkts_total
         property_name: bufferCum
         type: counter
         help_text: The number of packets dropped by the interface due to a
           buffer overrun while transmitting since it was integrated into the
           fabric.
-      - key: aci_interface_tx_error_dropped_pkts
+      - key: aci_interface_tx_error_dropped_pkts_total
         property_name: errorCum
         type: counter
         help_text: The number of packets dropped by the interface due to a
