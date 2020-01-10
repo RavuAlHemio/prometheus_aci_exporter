@@ -207,7 +207,7 @@ common_queries:
         help_text: The current Pulse-Width Modulation value of the fan.
     labels:
       - property_name: dn
-        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/ft/fan-(?P<fan>[1-9][0-9]*)/"
   psu_power_stats:
     class_name: eqptPsPower5min
     metrics:
