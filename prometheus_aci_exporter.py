@@ -305,43 +305,65 @@ class AciCollector(object):
                 class_name = list(instance.keys())[0]
                 attributes = instance[class_name]['attributes']
 
-                labels = {}
-                self._add_common_labels(labels, query, query_name, fabric_name, class_name)
-                for label_definition in query.get('labels', list()):
-                    updated_labels = self.process_value(attributes, label_definition)
-                    if updated_labels is None:
-                        drop_instance = True
-                        break
-                    labels.update(updated_labels)
+                # handle indexing
+                index_mode = query.get('index_mode', 'none')
+                index_label = query.get('index_label', None)
+                if index_mode == 'none':
+                    indexes_prop_suffixes = [(-1, "")]
+                else:
+                    index_max = int(attributes[query['index_max_property']])
+                    if index_mode == 'zero_based':
+                        indexes_prop_suffixes = [(i, f"{i}") for i in range(index_max)]
+                    elif index_mode == 'zero_based_first_nothing':
+                        indexes_prop_suffixes = [(i, f"{i}" if i > 0 else "") for i in range(index_max)]
+                    elif index_mode == 'one_based':
+                        indexes_prop_suffixes = [(i+1, f"{i+1}") for i in range(index_max)]
+                    elif index_mode == 'one_based_first_nothing':
+                        indexes_prop_suffixes = [(i+1, f"{i+1}" if i > 0 else "") for i in range(index_max)]
+                    else:
+                        raise ValueError(f"unknown index mode {index_mode!r}")
 
-                if drop_instance:
-                    continue
+                for index, prop_suffix in indexes_prop_suffixes:
+                    labels = {}
+                    self._add_common_labels(labels, query, query_name, fabric_name, class_name)
+                    for label_definition in query.get('labels', list()):
+                        updated_labels = self.process_value(attributes, label_definition)
+                        if updated_labels is None:
+                            drop_instance = True
+                            break
+                        labels.update(updated_labels)
 
-                values = {}
+                    if index_label is not None:
+                        labels[index_label] = str(index)
 
-                for value_definition in query.get('metrics', list()):
-                    # extract the definition
-                    metric_name = value_definition['key']
-                    metric_type = value_definition['type']
-                    help_text = value_definition.get('help_text', '')
+                    if drop_instance:
+                        continue
 
-                    metric_object = Metric(
-                        metric_name, metric_type, help_text,
-                        label_keys=labels.keys()
-                    )
-                    metric_definitions[metric_name] = metric_object
+                    values = {}
 
-                    # store the value
-                    value = self.process_value(attributes, value_definition)
-                    if value is None:
-                        drop_instance = True
-                        break
-                    values.update(value)
+                    for value_definition in query.get('metrics', list()):
+                        # extract the definition
+                        metric_name = value_definition['key']
+                        metric_type = value_definition['type']
+                        help_text = value_definition.get('help_text', '')
 
-                if drop_instance:
-                    continue
+                        metric_object = Metric(
+                            metric_name, metric_type, help_text,
+                            label_keys=labels.keys()
+                        )
+                        metric_definitions[metric_name] = metric_object
 
-                all_values_labels.append((values, labels))
+                        # store the value
+                        value = self.process_value(attributes, value_definition, prop_suffix)
+                        if value is None:
+                            drop_instance = True
+                            break
+                        values.update(value)
+
+                    if drop_instance:
+                        continue
+
+                    all_values_labels.append((values, labels))
 
             if not all_values_labels:
                 continue
@@ -371,9 +393,10 @@ class AciCollector(object):
 
 
     def process_value(
-            self, attributes: Dict[str, JsonType], definition: Dict[str, JsonType]
+            self, attributes: Dict[str, JsonType], definition: Dict[str, JsonType],
+            property_name_suffix: str = ""
     ) -> JsonType:
-        property_name = definition['property_name']
+        property_name = definition['property_name'] + property_name_suffix
         property_value = attributes.get(property_name, None)
         if property_value is None:
             return None

@@ -26,6 +26,9 @@ common_queries:
   dom_stats:
     class_name: ethpmDOMStats
     scope: children
+    index_mode: one_based_first_nothing
+    index_label: lane
+    index_max_property: lanes
     metrics:
       - key: aci_dom_value
         property_name: value
