@@ -331,7 +331,10 @@ class AciCollector(object):
                         if updated_labels is None:
                             drop_instance = True
                             break
-                        labels.update(updated_labels)
+                        try:
+                            labels.update(updated_labels)
+                        except ValueError as ex:
+                            raise ValueError(f"failed to update labels in query {query_name!r} with {updated_labels!r}: {ex}")
 
                     if index_label is not None:
                         labels[index_label] = str(index)
@@ -358,7 +361,10 @@ class AciCollector(object):
                         if value is None:
                             drop_instance = True
                             break
-                        values.update(value)
+                        try:
+                            values.update(value)
+                        except ValueError as ex:
+                            raise ValueError(f"failed to update values for metric {metric_name!r} in query {query_name!r}: {ex}")
 
                     if drop_instance:
                         continue
