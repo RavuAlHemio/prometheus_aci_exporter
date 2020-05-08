@@ -612,9 +612,10 @@ def main() -> None:
 
     aci_collector = AciCollector(config)
 
-    if hasattr(signal, 'SIGHUP'):
+    hup = getattr(signal, 'SIGHUP', None)
+    if hup is not None:
         sighup_handler = get_sighup_handler(aci_collector, args.config_file)
-        signal.signal(signal.SIGHUP, sighup_handler)
+        signal.signal(hup, sighup_handler)
 
     start_http_server(aci_collector, args.web_listen_port, args.web_listen_address, args)
 
