@@ -2,6 +2,7 @@
 import argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from itertools import chain
+import logging
 import re
 import signal
 from socketserver import ThreadingMixIn
@@ -22,6 +23,8 @@ DEFAULT_TIMEOUT = 10
 APIC_COOKIE_NAME = "APIC-cookie"
 PROM_METRIC_NAME_RE = re.compile("^[a-zA-Z_:][a-zA-Z0-9_:]*$")
 PROM_LABEL_NAME_RE = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+LOGGER = logging.getLogger("prometheus_aci_exporter")
 
 
 class Metric:
@@ -278,16 +281,22 @@ class AciCollector(object):
             common_queries.items()
         )
         for query_name, query in all_queries:
+            LOGGER.debug("processing query %r", query_name)
+
             class_name = query['class_name']
             scope = query.get('scope', 'self')
             filter_string = query.get('filter', None)
+            LOGGER.debug("class %r, scope %r, filter %r", class_name, scope, filter_string)
 
             instances = session.obtain_instances(class_name, filter_string, scope)
+            LOGGER.debug("obtained %d instances", len(instances))
 
             metric_definitions = {}
 
             count_metric = query.get('count_metric', None)
             if count_metric is not None:
+                LOGGER.debug("count metric (%r) defined", count_metric)
+
                 count_labels = {}
                 self._add_common_labels(count_labels, query, query_name, fabric_name, class_name)
 
@@ -304,6 +313,8 @@ class AciCollector(object):
                 drop_instance = False
                 class_name = list(instance.keys())[0]
                 attributes = instance[class_name]['attributes']
+
+                LOGGER.debug("processing instance of class %r with DN %r", class_name, attributes['dn'])
 
                 # handle indexing
                 index_mode = query.get('index_mode', 'none')
@@ -324,10 +335,18 @@ class AciCollector(object):
                         raise ValueError(f"unknown index mode {index_mode!r}")
 
                 for index, prop_suffix in indexes_prop_suffixes:
+                    LOGGER.debug("indexing: index %d, suffix %r", index, prop_suffix)
+
                     labels = {}
                     self._add_common_labels(labels, query, query_name, fabric_name, class_name)
                     for label_definition in query.get('labels', list()):
+                        LOGGER.debug(
+                            "processing label definition %r for attributes %r",
+                            label_definition,
+                            attributes,
+                        )
                         updated_labels = self.process_value(attributes, label_definition)
+                        LOGGER.debug("updated labels are %r", updated_labels)
                         if updated_labels is None:
                             drop_instance = True
                             break
@@ -337,13 +356,14 @@ class AciCollector(object):
                             raise ValueError(f"failed to update labels in query {query_name!r} with {updated_labels!r}: {ex}")
 
                     if index_label is not None:
+                        LOGGER.debug("adding index label %r=%d", index_label, index)
                         labels[index_label] = str(index)
 
                     if drop_instance:
+                        LOGGER.debug("dropping instance after labels")
                         continue
 
                     values = {}
-
                     for value_definition in query.get('metrics', list()):
                         # extract the definition
                         metric_name = value_definition['key']
@@ -357,7 +377,14 @@ class AciCollector(object):
                         metric_definitions[metric_name] = metric_object
 
                         # store the value
+                        LOGGER.debug(
+                            "processing value definition %r for attributes %r and prop suffix %r",
+                            value_definition,
+                            attributes,
+                            prop_suffix,
+                        )
                         value = self.process_value(attributes, value_definition, prop_suffix)
+                        LOGGER.debug("value is %r", value)
                         if value is None:
                             drop_instance = True
                             break
@@ -367,6 +394,7 @@ class AciCollector(object):
                             raise ValueError(f"failed to update values for metric {metric_name!r} in query {query_name!r} with {value!r}: {ex}")
 
                     if drop_instance:
+                        LOGGER.debug("dropping instance after value")
                         continue
 
                     all_values_labels.append((values, labels))
@@ -559,6 +587,7 @@ def start_http_server(collector, port, addr='', args=None):
     server_thread = Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
+    LOGGER.info("listening on %s:%d", addr, port)
 
 
 def main() -> None:
@@ -567,7 +596,17 @@ def main() -> None:
     parser.add_argument("--web.listen-port", dest="web_listen_port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--web.listen-address", dest="web_listen_address", type=str, default="")
     parser.add_argument("--web.openmetrics", dest="web_openmetrics", action="store_true")
+    parser.add_argument(
+        "--log.level", dest="log_level",
+        choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
+        default="INFO",
+    )
     args = parser.parse_args()
+
+    log_level = getattr(logging, args.log_level)
+    logging.basicConfig(
+        level=log_level,
+    )
 
     config = load_config(args.config_file)
 
