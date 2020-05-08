@@ -364,7 +364,7 @@ class AciCollector(object):
                         try:
                             values.update(value)
                         except ValueError as ex:
-                            raise ValueError(f"failed to update values for metric {metric_name!r} in query {query_name!r}: {ex}")
+                            raise ValueError(f"failed to update values for metric {metric_name!r} in query {query_name!r} with {value!r}: {ex}")
 
                     if drop_instance:
                         continue
