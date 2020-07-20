@@ -133,6 +133,17 @@ common_queries:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
   interface_rx_err_stats:
+    class_name: eqptIngrErrPkts5min
+    metrics:
+      - key: aci_interface_rx_crc_error_pkts_total
+        property_name: crcCountCum
+        type: counter
+        help_text: The number of packets with a CRC alignment error received by
+          the interface since it was integrated into the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+  interface_rx_drop_stats:
     class_name: eqptIngrDropPkts5min
     metrics:
       - key: aci_interface_rx_buffer_dropped_pkts_total
@@ -162,7 +173,7 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
-  interface_tx_err_stats:
+  interface_tx_drop_stats:
     class_name: eqptEgrDropPkts5min
     metrics:
       - key: aci_interface_tx_queue_dropped_pkts_total
