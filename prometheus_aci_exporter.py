@@ -431,7 +431,11 @@ class AciCollector(object):
             property_name_suffix: str = ""
     ) -> JsonType:
         property_name = definition['property_name'] + property_name_suffix
-        property_value = attributes.get(property_name, None)
+        const_value = definition.get('const_value', None)
+        if const_value is not None:
+            property_value = const_value
+        else:
+            property_value = attributes.get(property_name, None)
         if property_value is None:
             return None
 

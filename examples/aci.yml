@@ -61,6 +61,19 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"
+  interface_label:
+    class_name: l1PhysIf
+    metrics:
+      - key: aci_interface_descr_label
+        property_name: descr
+        const_value: 1
+        type: gauge
+        help_text: Always 1 but contains the interface description in a label.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]$"
+      - property_name: descr
+        key: descr
   interface_info:
     class_name: ethpmPhysIf
     metrics:
