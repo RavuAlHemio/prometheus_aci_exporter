@@ -71,7 +71,7 @@ common_queries:
         help_text: Always 1 but contains the interface description in a label.
     labels:
       - property_name: dn
-        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]$"
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]$"
       - property_name: descr
         key: descr
   interface_info:
