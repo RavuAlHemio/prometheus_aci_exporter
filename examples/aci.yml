@@ -124,6 +124,7 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+        regex_must_match: true
   interface_tx_stats:
     class_name: eqptEgrBytes5min
     metrics:
@@ -145,6 +146,7 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+        regex_must_match: true
   interface_rx_err_stats:
     class_name: eqptIngrErrPkts5min
     metrics:
@@ -156,6 +158,7 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+        regex_must_match: true
   interface_rx_drop_stats:
     class_name: eqptIngrDropPkts5min
     metrics:
@@ -186,6 +189,7 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+        regex_must_match: true
   interface_tx_drop_stats:
     class_name: eqptEgrDropPkts5min
     metrics:
@@ -210,6 +214,7 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+        regex_must_match: true
   fru_power_stats:
     class_name: eqptFruPower5min
     metrics:
