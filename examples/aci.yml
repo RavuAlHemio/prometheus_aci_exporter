@@ -147,6 +147,55 @@ common_queries:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
         regex_must_match: true
+  interface_rx_packet_stats:
+    class_name: eqptIngrPkts5min
+    metrics:
+      - key: aci_interface_rx_unicast_packets_total
+        property_name: unicastCum
+        type: counter
+        help_text: The number of unicast packets received on the interface since
+          it was integrated into the fabric.
+      - key: aci_interface_rx_multicast_packets_total
+        property_name: multicastCum
+        type: counter
+        help_text: The number of multicast packets received on the interface
+          since it was integrated into the fabric.
+      - key: aci_interface_rx_broadcast_packets_total
+        property_name: floodCum
+        type: counter
+        help_text: The number of broadcast packets received on the interface
+          since it was integrated into the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+        regex_must_match: true
+  interface_tx_packet_stats:
+    class_name: eqptEgrPkts5min
+    metrics:
+      - key: aci_interface_tx_unicast_packets_total
+        property_name: unicastCum
+        type: counter
+        help_text: The number of unicast packets transmitted on the interface
+          since it was integrated into the fabric.
+      - key: aci_interface_tx_multicast_packets_total
+        property_name: multicastCum
+        type: counter
+        help_text: The number of multicast packets transmitted on the interface
+          since it was integrated into the fabric.
+      - key: aci_interface_tx_broadcast_packets_total
+        property_name: floodCum
+        type: counter
+        help_text: The number of broadcast packets transmitted on the interface
+          since it was integrated into the fabric.
+      - key: aci_interface_tx_discarded_packets_total
+        property_name: discardCum
+        type: counter
+        help_text: The number of outgoing packets discarded on the interface
+          since it was integrated into the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+        regex_must_match: true
   interface_rx_err_stats:
     class_name: eqptIngrErrPkts5min
     metrics:
