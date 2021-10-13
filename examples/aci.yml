@@ -380,7 +380,7 @@ common_queries:
           'mismatch': 5
     labels:
       - property_name: dn
-        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/ftslot-(?P<psu>[^/]+)/"
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/ftslot-(?P<fan>[^/]+)/"
   fan_rpm_stats:
     class_name: eqptFanStats5min
     metrics:
