@@ -363,6 +363,24 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/"
+  fan_state:
+    class_name: eqptFan
+    metrics:
+      - key: aci_fan_oper_state
+        property_name: operSt
+        type: gauge
+        help_text: The current operational state of the fan.
+          (0=unknown, 1=ok, 2=fail, 3=absent, 4=shut, 5=mismatch)
+        cases:
+          'unknown': 0
+          'ok': 1
+          'fail': 2
+          'absent': 3
+          'shut': 4
+          'mismatch': 5
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/ftslot-(?P<psu>[^/]+)/"
   fan_rpm_stats:
     class_name: eqptFanStats5min
     metrics:
@@ -377,6 +395,36 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/(?P<slotType>[a-z]+)-(?P<slot>[^/]+)/ft/fan-(?P<fan>[1-9][0-9]*)/"
+  psu_state:
+    class_name: eqptPsu
+    metrics:
+      - key: aci_psu_oper_state
+        property_name: operSt
+        type: gauge
+        help_text: The current operational state of the power supply unit.
+          (0=unknown, 1=ok, 2=fail, 3=absent, 4=shut, 5=mismatch)
+        cases:
+          'unknown': 0
+          'ok': 1
+          'fail': 2
+          'absent': 3
+          'shut': 4
+          'mismatch': 5
+      - key: aci_psu_fan_oper_state
+        property_name: fanOpSt
+        type: gauge
+        help_text: The current operational state of the fan that is part of the power supply unit.
+          (0=unknown, 1=ok, 2=fail, 3=absent, 4=shut, 5=mismatch)
+        cases:
+          'unknown': 0
+          'ok': 1
+          'fail': 2
+          'absent': 3
+          'shut': 4
+          'mismatch': 5
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/psuslot-(?P<psu>[^/]+)/"
   psu_power_stats:
     class_name: eqptPsPower5min
     metrics:
