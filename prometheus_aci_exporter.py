@@ -24,6 +24,33 @@ DEFAULT_TIMEOUT = 10
 APIC_COOKIE_NAME = "APIC-cookie"
 PROM_METRIC_NAME_RE = re.compile("^[a-zA-Z_:][a-zA-Z0-9_:]*$")
 PROM_LABEL_NAME_RE = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
+APIC_TIMESTAMP_RE = re.compile(
+    "^"
+    "(?P<year>[0-9]{4,})"
+    "-"
+    "(?P<month>[0-9]{2})"
+    "-"
+    "(?P<day>[0-9]{2})"
+    "T"
+    "(?P<hour>[0-9]{2})"
+    ":"
+    "(?P<minute>[0-9]{2})"
+    ":"
+    "(?P<second>[0-9]{2})"
+    "(?:"
+        "\\."
+        "(?P<frac>[0-9]{0,6})"
+    ")?"
+    "(?:"
+        "(?P<tzsign>[+-])"
+        "(?P<tzhour>[0-9]{2})"
+        ":"
+        "(?P<tzminute>[0-9]{2})"
+    "|"
+        "(?P<tzutc>Z)"
+    ")"
+    "$"
+)
 
 LOGGER = logging.getLogger("prometheus_aci_exporter")
 
@@ -428,7 +455,45 @@ class AciCollector(object):
 
 
     def parse_timestamp(self, timestamp_str: str) -> float:
-        return datetime.datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%f%z").timestamp()
+        # Python versions older than 3.7 cannot deal with colons in the timezone offset
+        # reimplement the parsing code just for that reason
+
+        tstamp_match = APIC_TIMESTAMP_RE.match(timestamp_str)
+        if tstamp_match is None:
+            raise ValueError("timestamp {0} does not match APIC timezone format".format(repr(timestamp_str)))
+
+        year = int(tstamp_match.group("year"))
+        month = int(tstamp_match.group("month"))
+        day = int(tstamp_match.group("day"))
+        hour = int(tstamp_match.group("hour"))
+        minute = int(tstamp_match.group("minute"))
+        second = int(tstamp_match.group("second"))
+
+        frac_str = tstamp_match.group("frac")
+        if frac_str is not None:
+            # append as many zeroes as required to make it six digits long
+            frac_str += (6 - len(frac_str)) * "0"
+            # cut down to 6 digits
+            frac_str = frac_str[:6]
+        else:
+            frac_str = "0"
+        microsecond = int(frac_str)
+
+        if tstamp_match.group("tzutc") is not None:
+            timezone_offset = 0
+        else:
+            tz_sign = tstamp_match.group("tzsign")
+            tz_hour = int(tstamp_match.group("tzhour"))
+            tz_minute = int(tstamp_match.group("tzminute"))
+
+            timezone_offset = tz_hour * 60 * 60 + tz_minute * 60
+            if tz_sign == "-":
+                timezone_offset = -timezone_offset
+
+        return datetime.datetime(
+            year, month, day, hour, minute, second, microsecond,
+            tzinfo=datetime.timezone(datetime.timedelta(seconds=timezone_offset)),
+        )
 
 
     def process_value(
