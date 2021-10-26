@@ -493,7 +493,7 @@ class AciCollector(object):
         return datetime.datetime(
             year, month, day, hour, minute, second, microsecond,
             tzinfo=datetime.timezone(datetime.timedelta(seconds=timezone_offset)),
-        )
+        ).timestamp()
 
 
     def process_value(
