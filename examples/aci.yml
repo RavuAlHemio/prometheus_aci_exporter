@@ -100,6 +100,12 @@ common_queries:
           'down': 1
           'up': 2
           'link-up': 3
+      - key: aci_interface_last_link_state_change_timestamp
+        property_name: lastLinkStChg
+        type: gauge
+        help_text: The Unix timestamp (seconds since Jan 01 1970 midnight UTC)
+          of the time when the interface's link state last changed.
+        value_type: timestamp
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/phys-\\[(?P<interface>[^\\]]+)\\]/"

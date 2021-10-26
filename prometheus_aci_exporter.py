@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from itertools import chain
 import logging
@@ -426,6 +427,10 @@ class AciCollector(object):
             labels['className'] = class_name
 
 
+    def parse_timestamp(self, timestamp_str: str) -> float:
+        return datetime.datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%f%z").timestamp()
+
+
     def process_value(
             self, attributes: Dict[str, JsonType], definition: Dict[str, JsonType],
             property_name_suffix: str = ""
@@ -448,6 +453,7 @@ class AciCollector(object):
                 'str': str,
                 'int': int,
                 'float': float,
+                'timestamp': self.parse_timestamp,
             }.get(type_key, None)
             if type_func is None:
                 raise ValueError(f"unknown type conversion function {type_func!r}")
