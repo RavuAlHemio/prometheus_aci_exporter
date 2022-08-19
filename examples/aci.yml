@@ -518,4 +518,28 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^uni/tn-(?P<tenant>[^/]+)/"
-
+  smart_licensing_state:
+    class_name: licenseManager
+    metrics:
+      - key: aci_smart_licensing_registration_state
+        property_name: registerState
+        type: gauge
+        help_text: The current state of the Smart Licensing registration.
+          (0=unregistered, 1=registered, 2=registering, 3=register-failure, 4=unregister-failure)
+        cases:
+          'unregistered': 0
+          'registered': 1
+          'registering': 2
+          'register-failure': 3
+          'unregister-failure': 4
+      - key: aci_smart_licensing_authorization_state
+        property_name: authStatus
+        type: gauge
+        help_text: The current state of the Smart Licensing authorization.
+          (0=evaluation, 1=evaluation-expired, 2=auth-expired, 3=in-compliance, 4=out-of-compliance)
+        cases:
+          'evaluation': 0
+          'evaluation-expired': 1
+          'auth-expired': 2
+          'in-compliance': 3
+          'out-of-compliance': 4
