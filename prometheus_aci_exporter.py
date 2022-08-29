@@ -433,7 +433,11 @@ class AciCollector(object):
             for values, labels in all_values_labels:
                 for key, value in values.items():
                     metric_object = metric_definitions[key]
-                    metric_object.add_value(float(value), labels.values())
+                    try:
+                        float_value = float(value)
+                    except ValueError as ve:
+                        raise ValueError(f"failed to convert {value!r} to float for {key!r} ({labels})") from ve
+                    metric_object.add_value(float_value, labels.values())
 
             for metric_object in metric_definitions.values():
                 yield metric_object
