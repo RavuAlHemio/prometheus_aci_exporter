@@ -84,6 +84,7 @@ common_queries:
           second.
         cases:
           'unknown':            0
+          'auto':              -1
           '100M':       100000000
           '1G':        1000000000
           '10G':      10000000000
