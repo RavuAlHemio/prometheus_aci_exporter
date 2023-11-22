@@ -359,6 +359,44 @@ common_queries:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ch/fcslot-(?P<fabricCard>[1-9][0-9]*)/sup/cpuport-(?P<cpu>[1-9][0-9]*)/"
         regex_must_match: true
+  vlan_rx_stats:
+    class_name: l2IngrBytes5min
+    metrics:
+      - key: aci_vlan_rx_unicast_bytes_total
+        property_name: unicastCum
+        type: counter
+        help_text: The number of unicast bytes received on the VLAN.
+      - key: aci_vlan_rx_multicast_bytes_total
+        property_name: multicastCum
+        type: counter
+        help_text: The number of multicast bytes received on the VLAN.
+      - key: aci_vlan_rx_broadcast_bytes_total
+        property_name: floodCum
+        type: counter
+        help_text: The number of broadcast bytes received on the VLAN.
+      - key: aci_vlan_rx_dropped_bytes_total
+        property_name: floodCum
+        type: counter
+        help_text: The number of bytes dropped on the VLAN.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ctx-\\[vxlan-[0-9]+\\]/bd-\\[vxlan-[0-9]+\\]/vlan-\\[vlan-(?P<vlan>[0-9]+)\\]/"
+        regex_must_match: true
+  vlan_tx_stats:
+    class_name: l2EgrBytes5min
+    metrics:
+      - key: aci_vlan_tx_unicast_bytes_total
+        property_name: unicastCum
+        type: counter
+        help_text: The number of unicast bytes transmitted on the VLAN.
+      - key: aci_vlan_tx_multicast_bytes_total
+        property_name: multicastCum
+        type: counter
+        help_text: The number of multicast bytes transmitted on the VLAN.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/ctx-\\[vxlan-[0-9]+\\]/bd-\\[vxlan-[0-9]+\\]/vlan-\\[vlan-(?P<vlan>[0-9]+)\\]/"
+        regex_must_match: true
   fru_power_stats:
     class_name: eqptFruPower5min
     metrics:
