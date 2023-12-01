@@ -215,6 +215,23 @@ common_queries:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
         regex_must_match: true
+  interface_rx_crc_err_stats:
+    class_name: eqptIngrCrcErrPkts5min
+    metrics:
+      - key: aci_interface_rx_fcs_crc_error_pkts_total
+        property_name: fcsCum
+        type: counter
+        help_text: The number of packets with an FCS CRC alignment error
+          received by the interface since it was integrated into the fabric.
+      - key: aci_interface_rx_stomped_crc_error_pkts_total
+        property_name: stompedCum
+        type: counter
+        help_text: The number of packets with a stomped CRC received by the
+          interface since it was integrated into the fabric.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/(?P<interfaceType>[a-z]+)-\\[(?P<interface>[^\\]]+)\\]/"
+        regex_must_match: true
   interface_rx_drop_stats:
     class_name: eqptIngrDropPkts5min
     metrics:
