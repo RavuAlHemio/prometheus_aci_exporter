@@ -532,6 +532,20 @@ common_queries:
     labels:
       - property_name: dn
         regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/"
+  apic_cpu_stats:
+    class_name: procCPU5min
+    metrics:
+      - key: aci_apic_cpu_usage_percent
+        property_name: currentLast
+        invalid_below: 0.0
+        invalid_above: 100.0
+        type: gauge
+        help_text: The current Central Processing Unit usage, in percent, of
+          the APIC.
+    labels:
+      - property_name: dn
+        regex: "^topology/pod-(?P<pod>[1-9][0-9]*)/node-(?P<node>[1-9][0-9]*)/sys/proc/CDproc"
+        regex_must_match: true # otherwise we obtain per-process CPU usage data too
   fabric_health_score:
     class_name: fabricOverallHealth5min
     metrics:
