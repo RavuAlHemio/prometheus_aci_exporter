@@ -559,10 +559,10 @@ class AciCollector(object):
                 self.regex_cache[regex_str] = regex
 
             match = regex.match(property_value)
-            if match is not None:
+            if str(match) != "None" or match is not None:
                 match_dict = match.groupdict()
                 property_value = {k: v if v is not None else "" for (k, v) in match_dict.items()}
-            elif regex_must_match:
+            elif str(regex_must_match) == "False" or regex_must_match:
                 # it didn't match, though
                 return None
 
